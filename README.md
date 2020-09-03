@@ -5,14 +5,14 @@
 
 <!-- badges: start -->
 
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![](https://www.r-pkg.org/badges/version/plu?color=brightgreen)](https://cran.r-project.org/package=plu)
+[![](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![License:
-MIT](https://img.shields.io/badge/license-MIT-blueviolet.svg)](https://opensource.org/licenses/MIT)
+MIT](https://img.shields.io/badge/license-MIT-blueviolet.svg)](https://cran.r-project.org/web/licenses/MIT)
 [![R build
 status](https://github.com/rossellhayes/plu/workflows/R-CMD-check/badge.svg)](https://github.com/rossellhayes/plu/actions)
-[![Codecov test
-coverage](https://codecov.io/gh/rossellhayes/plu/branch/master/graph/badge.svg)](https://codecov.io/gh/rossellhayes/plu?branch=master)
+[![](https://codecov.io/gh/rossellhayes/plu/branch/master/graph/badge.svg)](https://codecov.io/gh/rossellhayes/plu)
+[![Dependencies](https://tinyverse.netlify.com/badge/plu)](https://cran.r-project.org/package=plu)
 <!-- badges: end -->
 
 Pluralize phrases in R
@@ -29,7 +29,15 @@ and to include the length of a vector in natural language.
 
 ## Installation
 
-You can install the development version of **plu** with:
+You can install the stable release of **plu** from
+[CRAN](https://cran.r-project.org/package=plu) with:
+
+``` r
+install.packages("plu")
+```
+
+You can install the development version of **plu** from
+[GitHub](https://github.com/rossellhayes/plu) with:
 
 ``` r
 # install.packages("remotes")
@@ -67,7 +75,7 @@ Hex sticker font is
 [Bodoni\*](https://github.com/indestructible-type/Bodoni) by
 [indestructible type\*](https://indestructibletype.com/Home.html).
 
-Image adapted from icon made by [Freepik](https://freepik.com) from
+Image adapted from icon made by [Freepik](https://www.freepik.com) from
 [flaticon.com](https://www.flaticon.com/free-icon/umbrella_2357382).
 
 -----

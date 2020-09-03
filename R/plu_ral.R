@@ -58,7 +58,7 @@
 plu_ral <- function(
   x, vector = integer(2), n_fn = NULL, ...,
   n = length(vector), pl = abs(n) != 1,
-  irregulars = c("moderate", "conservative", "liberal", "none", "easter"),
+  irregulars = c("moderate", "conservative", "liberal", "none"),
   replace_n = TRUE
 ) {
   if (!length(x))                  return(character(0))
@@ -77,7 +77,7 @@ plu_ral <- function(
   end_space   <- substr(x, nchar_x <- nchar(x), nchar_x) == " "
 
   if (pl) {
-    x <- unlist(strsplit(x, "(?=[^A-Za-z0-9'-])(?![^{]*})", perl = TRUE))
+    x <- unlist(strsplit(x, "(?=[^A-Za-z0-9'\\-{])(?![^{]*})", perl = TRUE))
 
     braced     <- grepl(paste0("\\{|\\}", ifelse(replace_n, "|\\bn\\b", "")), x)
     x[!braced] <- plu_ralize(x[!braced], irregulars = irregulars)
