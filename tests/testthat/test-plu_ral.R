@@ -1,8 +1,6 @@
-one      <- integer(1)
-two      <- integer(2)
-fifty    <- integer(50)
-
-plu.irregulars <- options(plu.irregulars = NULL)
+one   <- integer(1)
+two   <- integer(2)
+fifty <- integer(50)
 
 test_that("pl", {
   expect_equal(plu_ral("word", pl = FALSE), "word")
@@ -30,6 +28,30 @@ test_that("spaces", {
   expect_equal(plu_ral("a word "), "words ")
   expect_equal(plu_ral(" a word"), " words")
   expect_equal(plu_ral(" a word "), " words ")
+})
+
+test_that("vector", {
+  expect_equal(
+    plu_ral(c("word", "phrase", "sentence")),
+    c("words", "phrases", "sentences")
+  )
+
+  expect_equal(
+    plu_ral(c("person ", " cactus", "attorney {general}", "", "{1|2|3}")),
+    c("people ", " cacti", "attorneys general", "", "2")
+  )
+
+  expect_equal(
+    plu_ral(c("A sentence.", "A sentence? A sentence. A sentence!")),
+    c("Sentences.", "Sentences? Sentences. Sentences!")
+  )
+
+  expect_equal(plu_ral(c("", "")), c("", ""))
+
+  expect_equal(
+    plu_ral(c(w = "word", p = "phrase", "sentence")),
+    c(w = "words", p = "phrases", "sentences")
+  )
 })
 
 test_that("punctuation", {
@@ -81,6 +103,16 @@ test_that("number", {
   expect_equal(plu_ral("{the|both|all n} number", fifty), "all 50 numbers")
 })
 
+test_that("capitalization", {
+  expect_equal(plu_ral("A word"), "Words")
+  expect_equal(plu_ral("! A word"), "! Words")
+  expect_equal(plu_ral("A test! A test! A test!"), "Tests! Tests! Tests!")
+})
+
+test_that("non-words", {
+  expect_equal(plu_ral(c("", "-", "...", "?!")), c("", "-", "...", "?!"))
+})
+
 test_that("early return", {
   expect_equal(plu_ral(character(0)), character(0))
 })
@@ -95,8 +127,9 @@ test_that("errors", {
   expect_error(plu_ral("word", replace_n = NA))
   expect_error(plu_ral("word", replace_n = numeric(1)))
   expect_error(plu_ral("word", replace_n = logical(2)))
-  expect_error(plu_ral("word", n_fn = "format"))
-  expect_error(plu_ral("word", n_fn = this_is_not_a_real_function))
-})
 
-options(plu.irregulars)
+  expect_error(plu_ral("word", n_fn = plu_not_real_fun),    "plu_not_real_fun")
+  expect_error(plu_ral("word", n_fn = "plu_not_real_fun"),  "plu_not_real_fun")
+  expect_error(plu_ral("word", n_fn = plu::not_real_fun),   "plu::not_real_fun")
+  expect_error(plu_ral("word", n_fn = "plu::not_real_fun"), "plu::not_real_fun")
+})

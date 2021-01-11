@@ -165,13 +165,14 @@ found in the file "extra-words"
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://plu.rossellhayes.com}
   \item \url{https://github.com/rossellhayes/plu}
   \item Report bugs at \url{https://github.com/rossellhayes/plu/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Alexander Rossell Hayes \email{alexander@rossellhayes.com} [copyright holder]
+\strong{Maintainer}: Alexander Rossell Hayes \email{alexander@rossellhayes.com} (\href{https://orcid.org/0000-0001-9412-0457}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

@@ -61,49 +61,70 @@ plu_ral <- function(
   irregulars = c("moderate", "conservative", "liberal", "none"),
   replace_n = TRUE
 ) {
-  if (!length(x))                  return(character(0))
-  if (!is.character(x))            stop("`x` must be a character vector")
-  if (length(n) != 1)              stop("`n` must be length one")
-  if (!is.numeric(n))              stop("`n` must be numeric")
-  if (length(pl) != 1)             stop("`pl` must be length one")
-  if (!is.logical(pl) | is.na(pl)) stop("`pl` must be TRUE or FALSE")
-  if (length(replace_n) != 1)      stop("`replace_n` must be length one")
-  if (!is.logical(replace_n) | is.na(replace_n))
-    stop("`replace_n` must be TRUE or FALSE")
-  if (!is.null(n_fn) & !is.function(n_fn))
-    stop("`n_fn` must be an unquoted function name")
+  if (!length(x))       {return(character(0))}
+  if (!is.character(x)) {rlang::abort("`x` must be a character vector")}
 
-  start_space <- substr(x, 1, 1) == " "
-  end_space   <- substr(x, nchar_x <- nchar(x), nchar_x) == " "
+  if (length(n) != 1) {rlang::abort("`n` must be length one")}
+  if (!is.numeric(n)) {rlang::abort("`n` must be numeric")}
 
-  if (pl) {
-    x <- unlist(strsplit(x, "(?=[^A-Za-z0-9'\\-{])(?![^{]*})", perl = TRUE))
+  if (length(pl) != 1)             {rlang::abort("`pl` must be length one")}
+  if (!is.logical(pl) | is.na(pl)) {rlang::abort("`pl` must be TRUE or FALSE")}
 
-    braced     <- grepl(paste0("\\{|\\}", ifelse(replace_n, "|\\bn\\b", "")), x)
-    x[!braced] <- plu_ralize(x[!braced], irregulars = irregulars)
-    x          <- paste(x, collapse = "")
+  if (length(replace_n) != 1) {rlang::abort("`replace_n` must be length one")}
+  if (!is.logical(replace_n) | is.na(replace_n)) {
+    rlang::abort("`replace_n` must be TRUE or FALSE")
   }
 
-  x <- gsub(
+  if (any(nchar(x) > 1)) {
+    mat <- stringi::stri_split_boundaries(x, type = "sentence", simplify = TRUE)
+  } else {
+    mat <- matrix(x, ncol = 1)
+  }
+
+  start_space <- substr(mat, 1, 1) == " "
+  end_space   <- substr(mat, nchar(mat), nchar(mat)) == " "
+  start_caps  <- is_capitalized(mat, strict = TRUE)
+
+  if (pl) {
+    split <- stringi::stri_split_regex(
+      mat,
+      "((?=[^[:alnum:]'\\-\\{])|(?<=[^[:alnum:]'\\-\\{]))(?![^\\{]*\\})",
+      simplify = TRUE
+    )
+
+    braced  <- stringi::stri_detect_regex(
+      split, paste0("\\{|\\}", ifelse(replace_n, "|\\bn\\b", ""))
+    )
+
+    split[!braced] <- plu_ralize(split[!braced], irregulars = irregulars)
+    mat[]          <- apply(split, 1, paste, collapse = "")
+  }
+
+  mat[] <- stringi::stri_replace_all_regex(
+    mat,
     "\\{([^{}\\|]*?)\\|([^{}\\|]*?)\\|([^{}\\|]*?)\\}",
-    ifelse(abs(n) == 1, "\\1", ifelse(abs(n) == 2, "\\2", "\\3")),
-    x
+    switch(as.character(abs(n)), "1" = "$1", "2" = "$2", "$3")
   )
-  x <- gsub(
+
+  mat[] <- stringi::stri_replace_all_regex(
+    mat,
     "\\{([^{}\\|]*?)\\|([^{}\\|]*?)\\}",
-    ifelse(abs(n) == 1, "\\1", "\\2"),
-    x
+    ifelse(abs(n) == 1, "$1", "$2")
   )
 
-  if (!is.null(n_fn)) n <- n_fn(n, ...)
-  if (replace_n)      x <- gsub("\\bn\\b", n, x)
+  if (replace_n) {
+    n_fn  <- get_fun(n_fn)
+    mat[] <- stringi::stri_replace_all_regex(mat, "\\bn\\b", n_fn(n, ...))
+  }
 
-  x <- gsub("\\{([^{}]*)\\}", "\\1", x)
-  x <- plu_nge(x, ends = TRUE)
+  mat[] <- stringi::stri_replace_all_regex(mat, "\\{([^{}]*)\\}", "$1")
+  mat[] <- plu_nge(mat, ends = TRUE)
 
-  if (start_space) x <- paste0(" ", x)
-  if (end_space)   x <- paste0(x, " ")
+  mat[start_space] <- paste0(" ", mat[start_space])
+  mat[end_space]   <- paste0(mat[end_space], " ")
+  mat[start_caps]  <- capitalize(mat[start_caps])
 
+  x[] <- apply(mat, 1, paste, collapse = "")
   x
 }
 
