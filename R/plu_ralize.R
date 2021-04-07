@@ -1,20 +1,12 @@
 #' Pluralize a word
 #'
 #' @param x A character vector of English words to be pluralized
-#' @param irregulars What level of irregularity to use in pluralization.
-#'     `"moderate"` uses the most common pluralization.
-#'     `"conservative"` uses the most common irregular plural if one exists,
-#'     even if a regular plural is more common.
-#'     `"liberal"` uses a regular plural if it exists, even if an irregular
-#'     plural is more common.
-#'     `"none"` attempts to apply regular noun pluralization rules to all words.
-#'     Defaults to `"moderate"`.
-#'     The default can be changed by setting `options(plu.irregulars)`.
-#'     See examples.
+#' @inheritParams plu_ral
 #'
 #' @return The character vector `x` pluralized
 #'
-#' @seealso [plu::ral()] to pluralize an English phrase based on a condition
+#' @seealso [plu_ral()] to pluralize an English phrase based on a condition
+#' @inheritSection plu_ral Irregular plurals
 #'
 #' @source Irregular plurals list adapted from the Automatically Generated
 #' Inflection Database (AGID).
@@ -31,8 +23,8 @@ plu_ralize <- function(
     "plu.irregulars", c("moderate", "conservative", "liberal", "none")
   )
 ) {
-  if (!length(x))       return(character(0))
-  if (!is.character(x)) stop("`x` must be a character vector")
+  if (!length(x)) return(character(0))
+  assert_type(x, "character")
 
   irregulars <- match.arg(
     irregulars, c("moderate", "conservative", "liberal", "none")
@@ -48,23 +40,25 @@ plu_ralize <- function(
 
   todo <- grepl("[A-Za-z0-9]$", x)
 
-  irreg    <- todo & x %in% dict[["singular"]]
-  x[irreg] <- dict[["plural"]][match(x[irreg], dict[["singular"]])]
-  todo     <- todo & !irreg
+  irreg              <- match(x[todo], dict$singular)
+  irreg_na           <- is.na(irreg)
+  x[todo][!irreg_na] <- dict$plural[irreg[!irreg_na]]
+  todo[todo]         <- irreg_na
 
-  irreg_upper <- todo & tosentence(x) == x & tolower(x) %in% dict[["singular"]]
-  x[irreg_upper] <- tosentence(
-    dict[["plural"]][match(tolower(x[irreg_upper]), dict[["singular"]])]
-  )
-  todo <- todo & !irreg_upper
+  upper              <- tosentence(x[todo]) == x[todo]
+  irreg              <- upper[NA]
+  irreg[upper]       <- match(tolower(x[todo][upper]), dict$singular)
+  irreg_na           <- is.na(irreg)
+  x[todo][!irreg_na] <- tosentence(dict$plural[irreg[!irreg_na]])
+  todo[todo]         <- irreg_na
 
-  xy    <- todo & grepl("[^AaEeIiOoUu]y$|[Qq][Uu]y$", x)
-  x[xy] <- gsub("y$", "ies", x[xy])
-  todo  <- todo & !xy
+  xy          <- grepl("([^AaEeIiOoUu]|[Qq][Uu])y$", x[todo])
+  x[todo][xy] <- gsub("y$", "ies", x[todo][xy])
+  todo[todo]  <- !xy
 
-  xs    <- todo & grepl("[JSXZjsxz]$|[CScs][Hh]$", x)
-  x[xs] <- paste0(x[xs], "es")
-  todo  <- todo & !xs
+  xs          <- grepl("([JSXZjsxz]|[CScs][Hh])$", x[todo])
+  x[todo][xs] <- paste0(x[todo][xs], "es")
+  todo[todo]  <- !xs
 
   x[todo] <- paste0(x[todo], "s")
 

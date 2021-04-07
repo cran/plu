@@ -1,3 +1,31 @@
+# plu 0.2.1
+
+## New features
+* `plu_ral()` now supports arbitrary delimteters for special sequences.
+  * `plu_ral("attorney [general]", open = "[", close = "]")` produces "attorneys general".
+* `plu_ral()` now supports {braced|pipe} sequences of indefinite length.
+  * `plu_ral("{one|two|three|more}", n = 3)` produces "three".
+  * `plu_ral("{one|two|three|more}", n = 50)` produces "more".
+  * The delimters of these sequences can be changed with `open` and `close`.
+
+## Patches
+* Modest speed improvements to `plu_ralize()`.
+  * This propagates to `plu_ral()` and `plu_more()`, which use `plu_ralize()` internally.
+* `plu_ral()` now correctly handles {braced} strings that contain sentence breaks.
+  * Previously, sentence breaks would break the {braced} string and apply normal pluralization to its contents.
+* `plu_ral()` now correctly handles {braced|pipe} sequences when `pl` is set to `FALSE`.
+  * `plu_ral("{singular|plural}", pl = FALSE)` now returns `"singular"` instead of incorrectly returning `"plural"`.
+* `plu_ralize()` now correctly handles ALL-CAPS words where their lowercase equivalent has an irregular plural.
+  * `plu_ralize("CHILD")` now returns `"CHILDs"` instead of incorrectly returning `"Children"`.
+* `is_capital(strict = TRUE)` now correctly handles non-character inputs.
+  * `is_capital(1, strict = TRUE)` no returns `FALSE` instead of incorrectly returning `NA`.
+  
+## Miscellaneous
+* Error messages now use `crayon` if it is installed.
+* Deprecated arguments to `plu::stick()` now produce errors.
+* Removed dependencies on `rlang` and `stringi`.
+* Gained dependency on `backports`.
+
 # plu 0.2.0
 
 ## New features

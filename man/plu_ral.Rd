@@ -7,31 +7,35 @@
 \usage{
 plu_ral(
   x,
-  vector = integer(2),
+  vector = NULL,
   n_fn = NULL,
   ...,
-  n = length(vector),
-  pl = abs(n) != 1,
+  n = NULL,
+  pl = NULL,
   irregulars = c("moderate", "conservative", "liberal", "none"),
-  replace_n = TRUE
+  replace_n = TRUE,
+  open = "{",
+  close = "}"
 )
 
 ral(
   x,
-  vector = integer(2),
+  vector = NULL,
   n_fn = NULL,
   ...,
-  n = length(vector),
-  pl = abs(n) != 1,
+  n = NULL,
+  pl = NULL,
   irregulars = c("moderate", "conservative", "liberal", "none"),
-  replace_n = TRUE
+  replace_n = TRUE,
+  open = "{",
+  close = "}"
 )
 }
 \arguments{
-\item{x}{An English word or phrase to be pluralized.
+\item{x}{An character vector of English words or phrase to be pluralized.
 See details for special sequences which are handled differently.}
 
-\item{vector}{A vector whose length determines \code{n}. Defaults to length 2.}
+\item{vector}{A vector whose length determines \code{n}. Defaults to \code{NULL}.}
 
 \item{n_fn}{A function to apply to the output of the special sequence
 \code{"n"}. See examples.
@@ -40,7 +44,8 @@ Defaults to \code{identity}, which returns \code{n} unchanged.}
 \item{...}{Additional arguments passed to the function \code{n_fn}.}
 
 \item{n}{The number which will determine the plurality of \code{x}.
-Defaults to \code{length(n)}. If specified, overrides \code{vector}.}
+Defaults to \code{length(vector)}.
+If specified, overrides \code{vector}.}
 
 \item{pl}{A logical value indicating whether to use the plural form (if
 \code{TRUE}) or the singular form (if \code{FALSE}) of \code{x}.
@@ -55,6 +60,7 @@ even if a regular plural is more common.
 \code{"liberal"} uses a regular plural if it exists, even if an irregular
 plural is more common.
 \code{"none"} attempts to apply regular noun pluralization rules to all words.
+See section "Irregular plurals" for more details.
 Defaults to \code{"moderate"}.
 The default can be changed by setting \code{options(plu.irregulars)}.
 See examples in \code{\link[=ralize]{ralize()}} for more details.}
@@ -63,6 +69,9 @@ See examples in \code{\link[=ralize]{ralize()}} for more details.}
 \code{"n"}.
 See details.
 Defaults to \code{TRUE}.}
+
+\item{open, close}{The opening and closing delimiters for special strings.
+See section "Special strings". Defaults to \code{"{"} and \code{"}"}.}
 }
 \value{
 The character vector \code{x} altered to match the number of \code{n}
@@ -70,8 +79,40 @@ The character vector \code{x} altered to match the number of \code{n}
 \description{
 Pluralize a phrase based on the length of a vector
 }
-\details{
-Certain strings in \code{x} are treated specially.
+\section{Irregular plurals}{
+
+
+Many words in English have both regular and irregular plural forms.
+For example, the word "person" can be pluralized as "persons" or "people",
+and the word "formula" can be pluralized as "formulas" or "formulae".
+\code{plu} offers several options for how to handle words with multiple plurals.
+\itemize{
+\item The \code{moderate} list attempts to apply the most common pluralization,
+whether it is regular or irregular.
+This chooses the irregular plural "people" but the regular plural "formulas".
+\item The \code{conservative} list attempts to apply an irregular plural to every word
+that has one.
+This chooses "people" and "formulae", but still uses regular plurals for
+words that have no irregular plural form.
+\item The \code{liberal} list attempts to apply a regular plural to every word that
+has one.
+This chooses "persons" and "formulas", but still uses irregular plurals for
+words that have no common regular plural, like "women".
+Many words in English have invariant plurals that look exactly the same as
+their singular forms, like "fish" or "deer".
+The \code{liberal} list attempts to use regular plurals for these words,
+producing "fishes" and "deers".
+\item The \code{none} list applies regular pluralization rules to all words, even
+those with no common regular plural.
+This produces, for example, "womans" as a plural for "woman" even though this
+is not a common English word.
+}
+}
+
+\section{Special strings}{
+
+
+Certain strings in \code{x} receive special treatment.
 \itemize{
 \item By default, \code{"a"} and \code{"an"} are deleted in the plural
 ("a word" to "words").
@@ -80,17 +121,21 @@ number in \code{n}.
 \itemize{
 \item This output can be modified with \code{n_fn}.
 }
-\item Strings between braces separated by a pipe will be treated as a custom
-plural (\code{"{a|some} word"} to "a word", "some words").
+\item Strings between \code{open} and \code{close} separated by a pipe will be treated as a
+custom plural (\code{"{a|some} word"} to "a word", "some words").
 \itemize{
-\item Three strings separated by pipes will be treated as a singular, dual,
-and plural form (\code{"{the|both|all} word"} to "the word" (1),
-"both words" (2), "all words" (3+)).
+\item More than two strings separated by pipes will be treated as singular,
+dual, trial, ... and plural forms. For example, \code{"{the|both|all} word"}
+to "the word" (1), "both words" (2), "all words" (3+).
+\item See examples for more.
 }
-\item Any other string between braces will be treated as invariant
-(\code{"attorney {general}"} to "attorneys general").
+\item Any other string between \code{open} and \code{close} without a pipe will be treated
+as invariant.
+For example, \code{"attorney {general}"} to "attorneys general" (notice
+"general" is not pluralized).
 }
 }
+
 \examples{
 plu::ral("apple", pl = FALSE)
 plu::ral("apple", pl = TRUE)
@@ -131,7 +176,24 @@ paste("The caterpillar ate", plu::ral("n delicacy", later))
 
 paste("The caterpillar ate", plu::ral("n apple", mon, nombre::cardinal))
 paste("The caterpillar ate", plu::ral("n delicacy", later, nombre::cardinal))
+
+# Special brace strings
+plu::ral("{one|two}", n = 1)
+plu::ral("{one|two}", n = 2)
+
+plu::ral("{one|two|more}", n = 1)
+plu::ral("{one|two|more}", n = 2)
+plu::ral("{one|two|more}", n = 3)
+plu::ral("{one|two|more}", n = 50)
+
+plu::ral("{one|two|three|more}", n = 1)
+plu::ral("{one|two|three|more}", n = 2)
+plu::ral("{one|two|three|more}", n = 3)
+plu::ral("{one|two|three|more}", n = 50)
+plu::ral("{one|two|three|more}", n = 0)
+plu::ral("{one|two|three|more}", n = 1.5)
 }
 \seealso{
-\code{\link[=ralize]{ralize()}} to convert an English word to its plural form.
+\code{\link[=plu_ralize]{plu_ralize()}} to convert an English word to its
+plural form.
 }

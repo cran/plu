@@ -40,17 +40,11 @@ If \code{\link{NULL}}, \code{sep} is used.}
 Defaults to \code{FALSE}.
 The default can be changed by setting \code{options(plu.oxford_comma)}.}
 
-\item{syndeton}{\lifecycle{deprecated} Whether to place the conjunction
-before the \code{"last"} list items, between \code{"all"} list items, or
-between \code{"none"}.
-Defaults to \code{"last"}.\preformatted{This argument is deprecated. You should set `sep` and `conj` explicitly
-instead of using `syndeton`.
-}}
+\item{syndeton}{\lifecycle{deprecated}}
 
-\item{fn}{\lifecycle{deprecated} A function to apply to all items in
-the list.}
+\item{fn}{\lifecycle{deprecated}}
 
-\item{...}{\lifecycle{deprecated} Additional arguments to \code{fn}.}
+\item{...}{\lifecycle{deprecated}}
 }
 \value{
 A character vector of length 1.
