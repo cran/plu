@@ -1,3 +1,9 @@
+# plu 0.2.2
+
+* Modest speed improvements to `plu_ralize()`.
+  * This propagates to `plu_ral()` and `plu_more()`, which use `plu_ralize()` internally.
+* Deprecated `plu_stick()` in favor of `knitr::combine_words()` or `glue::glue_collapse()`.
+
 # plu 0.2.1
 
 ## New features
