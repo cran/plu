@@ -1,7 +1,7 @@
 Type: Package
 Package: plu
 Title: Dynamically Pluralize Phrases
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: 
     person(given = "Alexander",
            family = "Rossell Hayes",
@@ -22,11 +22,11 @@ RdMacros: lifecycle
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.1
 NeedsCompilation: no
-Packaged: 2022-06-06 05:40:41 UTC; alex
+Packaged: 2022-08-12 17:32:34 UTC; alex
 Author: Alexander Rossell Hayes [aut, cre, cph]
     (<https://orcid.org/0000-0001-9412-0457>)
 Maintainer: Alexander Rossell Hayes <alexander@rossellhayes.com>
 Repository: CRAN
-Date/Publication: 2022-06-07 04:30:09 UTC
+Date/Publication: 2022-08-12 17:50:02 UTC
