@@ -8,46 +8,41 @@
 plu_ral(
   x,
   vector = NULL,
-  n_fn = NULL,
-  ...,
   n = NULL,
   pl = NULL,
   irregulars = c("moderate", "conservative", "liberal", "none"),
   replace_n = TRUE,
   open = "{",
-  close = "}"
+  close = "}",
+  n_fn = lifecycle::deprecated(),
+  ...
 )
 
 ral(
   x,
   vector = NULL,
-  n_fn = NULL,
-  ...,
   n = NULL,
   pl = NULL,
   irregulars = c("moderate", "conservative", "liberal", "none"),
   replace_n = TRUE,
   open = "{",
-  close = "}"
+  close = "}",
+  n_fn = lifecycle::deprecated(),
+  ...
 )
 }
 \arguments{
-\item{x}{An character vector of English words or phrase to be pluralized.
+\item{x}{A character vector (or vector that can be coerced to character)
+of English words or phrase to be pluralized.
 See details for special sequences which are handled differently.}
 
 \item{vector}{A vector whose length determines \code{n}. Defaults to \code{NULL}.}
 
-\item{n_fn}{A function to apply to the output of the special sequence
-\code{"n"}. See examples.
-Defaults to \code{identity}, which returns \code{n} unchanged.}
-
-\item{...}{Additional arguments passed to the function \code{n_fn}.}
-
-\item{n}{The number which will determine the plurality of \code{x}.
+\item{n}{A numeric vector which will determine the plurality of \code{x}.
 Defaults to \code{length(vector)}.
 If specified, overrides \code{vector}.}
 
-\item{pl}{A logical value indicating whether to use the plural form (if
+\item{pl}{A logical vector indicating whether to use the plural form (if
 \code{TRUE}) or the singular form (if \code{FALSE}) of \code{x}.
 Defaults to \code{FALSE} when \code{n} is \code{1} or \code{-1} and \code{TRUE} for all other
 values.
@@ -65,13 +60,16 @@ Defaults to \code{"moderate"}.
 The default can be changed by setting \code{options(plu.irregulars)}.
 See examples in \code{\link[=ralize]{ralize()}} for more details.}
 
-\item{replace_n}{A logical indicating whether to use special handling for
-\code{"n"}.
+\item{replace_n}{A logical indicating whether to use special handling for \code{"n"}.
 See details.
 Defaults to \code{TRUE}.}
 
 \item{open, close}{The opening and closing delimiters for special strings.
 See section "Special strings". Defaults to \code{"{"} and \code{"}"}.}
+
+\item{n_fn}{\lifecycle{deprecated}}
+
+\item{...}{\lifecycle{deprecated}}
 }
 \value{
 The character vector \code{x} altered to match the number of \code{n}
@@ -118,9 +116,6 @@ Certain strings in \code{x} receive special treatment.
 ("a word" to "words").
 \item The string \code{"n"} will be replaced with the length of \code{vector} or the
 number in \code{n}.
-\itemize{
-\item This output can be modified with \code{n_fn}.
-}
 \item Strings between \code{open} and \code{close} separated by a pipe will be treated as a
 custom plural (\code{"{a|some} word"} to "a word", "some words").
 \itemize{
@@ -161,21 +156,23 @@ paste("Tuesday, the caterpillar visited", plu::ral("a {pear} tree", tue))
 paste("Monday, the caterpillar ate", plu::ral("a {single|multiple} apple", mon))
 paste("Tuesday, the caterpillar ate", plu::ral("a {single|multiple} pear", tue))
 
-later <- c(
-  rep("plum", 3), rep("strawberry", 4), rep("orange", 5),
-  "chocolate cake", "ice-cream cone", "pickle", "Swiss cheese", "salami",
-  "lollipop", "cherry pie", "sausage", "cupcake", "watermelon"
+# Vectorized `n`
+foods <- c("apple", "pear", "plum", "strawberry", "orange")
+quantities <- c(1, 2, 3, 4, 5)
+plu::ral(foods, n = quantities)
+paste(
+  "The caterpillar ate",
+  and::and(paste(nombre::cardinal(quantities), plu::ral(foods, n = quantities)))
 )
 
+# Some words have a dual form, a specific form for quantities of two
 paste("The caterpillar ate", plu::ral("{the|both|all of the} apple", mon))
 paste("The caterpillar ate", plu::ral("{the|both|all of the} pear", tue))
-paste("The caterpillar ate", plu::ral("{the|both|all of the} delicacy", later))
+paste("The caterpillar ate", plu::ral("{the|both|all of the} delicacy", foods))
 
+# The string "n" will be replaced by the number used for pluralization
 paste("The caterpillar ate", plu::ral("n apple", mon))
-paste("The caterpillar ate", plu::ral("n delicacy", later))
-
-paste("The caterpillar ate", plu::ral("n apple", mon, nombre::cardinal))
-paste("The caterpillar ate", plu::ral("n delicacy", later, nombre::cardinal))
+paste("The caterpillar ate", plu::ral("n delicacy", foods))
 
 # Special brace strings
 plu::ral("{one|two}", n = 1)

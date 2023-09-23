@@ -1,3 +1,6 @@
+# @staticimports pkg:stringstatic
+#   str_detect str_replace
+
 #' Find a function
 #'
 #' @param fn A function name, either a character string or an unquoted
@@ -31,9 +34,6 @@ get_fun <- function(fn, default = identity) {
 
   if (fn_input == "default") {
     fn       <- deparse(substitute(default, env = env))
-    fn_input <- fn
-  } else if (fn_input == "n_fn") {
-    fn       <- deparse(substitute(n_fn, env = env))
     fn_input <- fn
   }
 

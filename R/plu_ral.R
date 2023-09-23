@@ -1,16 +1,16 @@
+# @staticimports pkg:stringstatic
+#   regex str_detect str_replace_all
+
 #' Pluralize a phrase based on the length of a vector
 #'
-#' @param x An character vector of English words or phrase to be pluralized.
+#' @param x A character vector (or vector that can be coerced to character)
+#'     of English words or phrase to be pluralized.
 #'     See details for special sequences which are handled differently.
 #' @param vector A vector whose length determines `n`. Defaults to `NULL`.
-#' @param n_fn A function to apply to the output of the special sequence
-#'     `"n"`. See examples.
-#'     Defaults to `identity`, which returns `n` unchanged.
-#' @param ... Additional arguments passed to the function `n_fn`.
-#' @param n The number which will determine the plurality of `x`.
+#' @param n A numeric vector which will determine the plurality of `x`.
 #'     Defaults to `length(vector)`.
 #'     If specified, overrides `vector`.
-#' @param pl A logical value indicating whether to use the plural form (if
+#' @param pl A logical vector indicating whether to use the plural form (if
 #'     `TRUE`) or the singular form (if `FALSE`) of `x`.
 #'     Defaults to `FALSE` when `n` is `1` or `-1` and `TRUE` for all other
 #'     values.
@@ -26,12 +26,13 @@
 #'     Defaults to `"moderate"`.
 #'     The default can be changed by setting `options(plu.irregulars)`.
 #'     See examples in [plu::ralize()] for more details.
-#' @param replace_n A logical indicating whether to use special handling for
-#'     `"n"`.
+#' @param replace_n A logical indicating whether to use special handling for `"n"`.
 #'     See details.
 #'     Defaults to `TRUE`.
 #' @param open,close The opening and closing delimiters for special strings.
 #'     See section "Special strings". Defaults to `"{"` and `"}"`.
+#' @param n_fn \lifecycle{deprecated}
+#' @param ... \lifecycle{deprecated}
 #'
 #' @section Irregular plurals:
 #'
@@ -72,7 +73,6 @@
 #'
 #' - The string `"n"` will be replaced with the length of `vector` or the
 #' number in `n`.
-#'     - This output can be modified with `n_fn`.
 #'
 #' - Strings between `open` and `close` separated by a pipe will be treated as a
 #' custom plural (`"{a|some} word"` to "a word", "some words").
@@ -95,18 +95,26 @@
 #' @example examples/plu_ral.R
 
 plu_ral <- function(
-  x, vector = NULL, n_fn = NULL, ..., n = NULL, pl = NULL,
+  x,
+  vector = NULL,
+  n = NULL,
+  pl = NULL,
   irregulars = c("moderate", "conservative", "liberal", "none"),
-  replace_n = TRUE, open = "{", close = "}"
+  replace_n = TRUE,
+  open = "{",
+  close = "}",
+  n_fn = lifecycle::deprecated(),
+  ...
 ) {
-  if (!length(x)) {return(character(0))}
-  assert_type(x, "character")
+  if (length(x) == 0) {return(character(0))}
+  mode(x) <- "character"
 
-  assert_length_1(replace_n)
-  assert_t_or_f(replace_n)
+  derived_plurality <- derive_plurality(x, vector, n, pl)
+  pl <- derived_plurality$pl
+  n <- derived_plurality$n
 
-  pl <- derive_pl(pl, n, vector)
-  n  <- derive_n(pl, n, vector)
+  # In case `x` is length 1 and `n` is length > 1
+  x <- recycle(x, n)
 
   validate_delimeters(open, close)
   open  <- escape(open)
@@ -123,17 +131,29 @@ plu_ral <- function(
 
   split_in <- plu_split(mat, boundaries, perl = TRUE)
 
-  braced <- str_detect(split_in, paste0(open, ".*", close))
+  braced <- str_detect(
+    split_in,
+    regex(paste0(open, ".*", close), multiline = TRUE, dotall = TRUE)
+  )
 
-  if (replace_n) {replace_n <- str_detect(split_in, "\\bn\\b")}
-  n_fn <- get_fun(n_fn)
+  assert_length_1(replace_n)
+  assert_t_or_f(replace_n)
+  if (replace_n) {
+    replace_n <- str_detect(split_in, "\\bn\\b")
+  }
+
+  if (lifecycle::is_present(n_fn)) {
+    lifecycle::deprecate_warn(when = "0.2.4", what = "plu_ral(n_fn)")
+  }
 
   split_out <- split_in
 
-  if (pl) {
+  if (any(pl)) {
+    pl <- rep(pl, each = nrow(split_out))
+
     # Pluralize words that aren't wrapped in {braces}
-    split_out[!braced & !replace_n] <- plu_ralize(
-      split_in[!braced & !replace_n], irregulars = irregulars
+    split_out[pl & !braced & !replace_n] <- plu_ralize(
+      split_in[pl & !braced & !replace_n], irregulars = irregulars
     )
 
     # Find where "a" or "an" have been removed
@@ -169,11 +189,16 @@ plu_ral <- function(
   }
 
   # Select appropriate option for words wrapped in braces
-  split_out[braced] <- pluralize_braces(split_out[braced], n, open, close)
+  n <- rep(n, each = nrow(split_out))
+  split_out[braced] <- pluralize_braces(
+    split_out[braced], n[braced], open, close
+  )
 
   # replace "n" with `n`
   split_out[replace_n] <- str_replace_all(
-    split_out[replace_n], "\\bn\\b", n_fn(n, ...)
+    split_out[replace_n],
+    pattern = "\\bn\\b",
+    replacement = n[replace_n]
   )
 
   mat[] <- apply(split_out, 2, paste, collapse = "")
@@ -187,34 +212,42 @@ plu_ral <- function(
 
 ral <- plu_ral
 
-derive_pl <- function(pl, n, vector) {
-  if (!is.null(pl)) {
-    assert_length_1(pl)
-    assert_t_or_f(pl)
-    return(pl)
+# @staticimports pkg:staticimports
+#   %||%
+
+derive_plurality <- function(x, vector, n, pl) {
+  if (is.null(n)) {
+    n <- n %||% length(vector)
   }
 
-  if (!is.null(n)) {
-    assert_length_1(n)
-    assert_type(n, "numeric")
-    return(abs(n) != 1)
+  assert_type(n, "numeric")
+
+  if (is.null(pl)) {
+    pl <- pl %||% (abs(n) != 1)
   }
 
-  abs(length(vector)) != 1
+  assert_t_or_f(pl)
+
+  n <- recycle(n, along = x)
+  pl <- recycle(pl, along = x)
+
+  n[pl & abs(n) == 1] <- 0
+  n[!pl & abs(n) != 1] <- 1
+
+  list(pl = pl, n = n)
 }
 
-derive_n <- function(pl, n, vector) {
-  if (!is.null(n)) {
-    assert_length_1(n)
-    assert_type(n, "numeric")
-    if (pl  && abs(n) == 1) {return(2)}
-    if (!pl && abs(n) != 1) {return(1)}
-    return(n)
-  }
+recycle <- function(x, along) {
+  x_name <- code(deparse(substitute(x)))
+  along_name <- code(deparse(substitute(along)))
 
-  if (pl  && abs(length(vector)) == 1) {return(2)}
-  if (!pl && abs(length(vector)) != 1) {return(1)}
-  length(vector)
+  if (length(along) == 1) return(x)
+  if (length(x) == length(along)) return(x)
+  if (length(x) == 1) return(rep(x, length(along)))
+  error(
+    "Cannot recycle ", x_name, " (length ", length(x), ") ",
+    "to match ", along_name, " (length ", length(along), ")."
+  )
 }
 
 validate_delimeters <- function(open, close) {
@@ -244,13 +277,13 @@ pluralize_braces <- function(x, n, open, close) {
     mid = sub(paste0("(?s)^.*?", open, "(.*?)", close), "\\1", x, perl = TRUE)
   )
 
-  brace_list$mid <- vapply(
-    strsplit(brace_list$mid, "\\|"),
-    function(x) {
+  brace_list$mid <- Map(
+    function(x, n) {
       if (abs(n) %in% seq_along(x)) {return(x[abs(n)])}
       x[length(x)]
     },
-    character(1)
+    x = strsplit(brace_list$mid, "\\|"),
+    n = n
   )
 
   paste0(brace_list$pre, brace_list$mid)
